@@ -21,4 +21,4 @@ dependencyResolutionManagement {
 
 rootProject.name = "ZoomableCanvas"
 include(":app")
- 
+include(":lib")
