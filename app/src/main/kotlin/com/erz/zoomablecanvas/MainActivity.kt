@@ -1,5 +1,6 @@
 package com.erz.zoomablecanvas
 
+import android.graphics.Paint
 import android.os.Bundle
 import androidx.activity.ComponentActivity
 import androidx.activity.compose.setContent
@@ -26,7 +27,13 @@ class MainActivity : ComponentActivity() {
 //                    )
 
                     ZoomableCanvas(
-                        modifier = Modifier
+                        modifier = Modifier,
+                        onDraw = { canvas ->
+                            canvas.drawCircle(500f, 750f, 50f, Paint().apply {
+                                strokeWidth = 5f
+                                style = Paint.Style.STROKE
+                            })
+                        }
                     )
                 }
             }

@@ -250,27 +250,26 @@ class ZoomableCanvasViewModel() : ViewModel() {
     }
 
     fun draw(
-        canvas: Canvas
+        canvas: Canvas,
+        externalDraw: (Canvas) -> Unit
     ) {
         canvas.withMatrix(canvasMatrix) {
-            drawInternal(canvas)
+            externalDraw(canvas)
         }
 
-        drawMiniMap(canvas)
-    }
-
-    private fun drawInternal(
-        canvas: Canvas
-    ) {
-
+        drawMiniMap(
+            canvas = canvas,
+            externalDraw = externalDraw
+        )
     }
 
     private fun drawMiniMap(
-        canvas: Canvas
+        canvas: Canvas,
+        externalDraw: (Canvas) -> Unit
     ) {
         if (miniMapEnabled) {
             canvas.withMatrix(miniMapMatrix) {
-                drawInternal(canvas)
+                externalDraw(canvas)
 
                 paint.style = Paint.Style.STROKE
                 paint.strokeWidth = 2f
