@@ -6,7 +6,7 @@ plugins {
 
 android {
     namespace = "com.erz.zoomablecanvas.lib"
-    compileSdk = 35
+    compileSdk = 36
 
     defaultConfig {
         minSdk = 24
@@ -38,6 +38,8 @@ android {
 
 dependencies {
 
+    implementation(libs.androidx.lifecycle.viewmodel.compose)
+    implementation(libs.androidx.lifecycle.viewmodel.ktx)
     implementation(libs.androidx.activity.compose)
     implementation(platform(libs.androidx.compose.bom))
     implementation(libs.androidx.ui)

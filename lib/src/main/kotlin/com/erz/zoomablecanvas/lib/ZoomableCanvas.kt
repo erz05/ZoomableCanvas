@@ -18,16 +18,17 @@ import androidx.compose.ui.input.pointer.pointerInteropFilter
 import androidx.compose.ui.layout.onGloballyPositioned
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.platform.LocalHapticFeedback
+import androidx.lifecycle.viewmodel.compose.viewModel
 
 @OptIn(ExperimentalComposeUiApi::class)
 @Composable
 fun ZoomableCanvas(
-    modifier: Modifier = Modifier,
-    zoomableCanvasViewModel: ZoomableCanvasViewModel
+    modifier: Modifier = Modifier
 ) {
+    val viewModel: ZoomableCanvasViewModel = viewModel()
     val context = LocalContext.current
     val haptic = LocalHapticFeedback.current
-    val invalidate by zoomableCanvasViewModel.invalidate.collectAsState()
+    val invalidate by viewModel.invalidate.collectAsState()
 
     val zoomableCanvasGestureDetector = remember {
         ZoomableCanvasGestureDetector(
@@ -35,7 +36,7 @@ fun ZoomableCanvas(
             listener = object : ZoomableCanvasGestureDetecorListener {
 
                 override fun onTranslate(distanceX: Float, distanceY: Float) {
-                    zoomableCanvasViewModel.onTranslate(
+                    viewModel.onTranslate(
                         distanceX = distanceX,
                         distanceY = distanceY
                     )
@@ -47,7 +48,7 @@ fun ZoomableCanvas(
                     currentX: Float,
                     currentY: Float
                 ) {
-                    zoomableCanvasViewModel.onMove(
+                    viewModel.onMove(
                         lastX = lastX,
                         lastY = lastY,
                         currentX = currentX,
@@ -60,7 +61,7 @@ fun ZoomableCanvas(
                     currentY: Float,
                     totalPointerCount: Int
                 ) {
-                    val result = zoomableCanvasViewModel.onUp(
+                    val result = viewModel.onUp(
                         currentX = currentX,
                         currentY = currentY,
                         totalPointerCount = totalPointerCount
@@ -72,7 +73,7 @@ fun ZoomableCanvas(
                 }
 
                 override fun onLongPress(touchX: Float, touchY: Float) {
-                    zoomableCanvasViewModel.onLongPress(
+                    viewModel.onLongPress(
                         touchX = touchX,
                         touchY = touchY
                     )
@@ -84,7 +85,7 @@ fun ZoomableCanvas(
                     currentY: Float,
                     scale: Float
                 ) {
-                    zoomableCanvasViewModel.onScale(
+                    viewModel.onScale(
                         currentX = currentX,
                         currentY = currentY,
                         scale = scale
@@ -92,7 +93,7 @@ fun ZoomableCanvas(
                 }
 
                 override fun onDone() {
-                    zoomableCanvasViewModel.onTouchDone()
+                    viewModel.onTouchDone()
                 }
             }
         )
@@ -107,7 +108,7 @@ fun ZoomableCanvas(
             }
             .background(colorScheme.background)
             .onGloballyPositioned { coordinates ->
-                zoomableCanvasViewModel.onGloballyPositioned(
+                viewModel.onGloballyPositioned(
                     coordinates.size.width.toFloat(),
                     coordinates.size.height.toFloat(),
                 )
@@ -116,7 +117,7 @@ fun ZoomableCanvas(
         invalidate
 
         drawIntoCanvas { canvas ->
-            zoomableCanvasViewModel.draw(canvas.nativeCanvas)
+            viewModel.draw(canvas.nativeCanvas)
         }
     }
 }
