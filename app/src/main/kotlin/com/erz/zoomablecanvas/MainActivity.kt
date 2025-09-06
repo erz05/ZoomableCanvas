@@ -12,6 +12,7 @@ import androidx.compose.runtime.Composable
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.tooling.preview.Preview
 import com.erz.zoomablecanvas.lib.ZoomableCanvas
+import com.erz.zoomablecanvas.lib.ZoomableConfiguration
 import com.erz.zoomablecanvas.ui.theme.ZoomableCanvasTheme
 
 class MainActivity : ComponentActivity() {
@@ -28,6 +29,14 @@ class MainActivity : ComponentActivity() {
 
                     ZoomableCanvas(
                         modifier = Modifier,
+                        configuration = ZoomableConfiguration(
+                            canFling = true,
+                            canDoubleTapToZoom = true,
+                            minZoom = 1f,
+                            maxZoom = 13f,
+                            constraintToComposableBounds = true,
+                            enableMiniMap = true
+                        ),
                         onDraw = { canvas ->
                             canvas.drawCircle(500f, 750f, 50f, Paint().apply {
                                 strokeWidth = 5f

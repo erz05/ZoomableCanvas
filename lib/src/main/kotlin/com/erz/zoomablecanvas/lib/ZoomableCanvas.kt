@@ -25,6 +25,7 @@ import androidx.lifecycle.viewmodel.compose.viewModel
 @Composable
 fun ZoomableCanvas(
     modifier: Modifier = Modifier,
+    configuration: ZoomableConfiguration,
     onDraw: (Canvas) -> Unit
 ) {
     val viewModel: ZoomableViewModel = viewModel()

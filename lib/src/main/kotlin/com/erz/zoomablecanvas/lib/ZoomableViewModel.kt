@@ -120,6 +120,8 @@ class ZoomableViewModel() : ViewModel() {
         )
 
         // Todo ERZ - should we restore the viewport?
+        // To restore viewPort we need to remember the center position of the last viewport and the last scale
+        // we will use that to center the new viewport and to scale
 
         panTo()
     }
