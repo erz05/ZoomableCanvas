@@ -27,15 +27,15 @@ fun ZoomableCanvas(
     modifier: Modifier = Modifier,
     onDraw: (Canvas) -> Unit
 ) {
-    val viewModel: ZoomableCanvasViewModel = viewModel()
+    val viewModel: ZoomableViewModel = viewModel()
     val context = LocalContext.current
     val haptic = LocalHapticFeedback.current
     val invalidate by viewModel.invalidate.collectAsState()
 
-    val zoomableCanvasGestureDetector = remember {
-        ZoomableCanvasGestureDetector(
+    val zoomableGestureDetector = remember {
+        ZoomableGestureDetector(
             context = context,
-            listener = object : ZoomableCanvasGestureDetecorListener {
+            listener = object : ZoomableGestureDetectorListener {
 
                 override fun onTranslate(distanceX: Float, distanceY: Float) {
                     viewModel.onTranslate(
@@ -106,7 +106,7 @@ fun ZoomableCanvas(
             .fillMaxSize()
             .clipToBounds()
             .pointerInteropFilter { motionEvent ->
-                return@pointerInteropFilter zoomableCanvasGestureDetector.onTouchEvent(motionEvent)
+                return@pointerInteropFilter zoomableGestureDetector.onTouchEvent(motionEvent)
             }
             .background(colorScheme.background)
             .onGloballyPositioned { coordinates ->
