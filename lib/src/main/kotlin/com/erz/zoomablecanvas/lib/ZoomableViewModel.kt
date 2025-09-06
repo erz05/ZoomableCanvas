@@ -13,7 +13,7 @@ import kotlinx.coroutines.flow.update
 import kotlin.math.max
 import kotlin.math.min
 
-class ZoomableCanvasViewModel() : ViewModel() {
+class ZoomableViewModel() : ViewModel() {
 
     companion object {
 

@@ -6,9 +6,9 @@ import android.view.MotionEvent
 import android.view.ScaleGestureDetector
 import kotlin.math.max
 
-class ZoomableCanvasGestureDetector(
+class ZoomableGestureDetector(
     context: Context,
-    private val listener: ZoomableCanvasGestureDetecorListener
+    private val listener: ZoomableGestureDetectorListener
 ) {
 
     private enum class ActionType {

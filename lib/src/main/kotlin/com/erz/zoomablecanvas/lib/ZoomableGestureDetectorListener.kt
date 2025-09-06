@@ -1,6 +1,6 @@
 package com.erz.zoomablecanvas.lib
 
-interface ZoomableCanvasGestureDetecorListener {
+interface ZoomableGestureDetectorListener {
 
     fun onTranslate(
         distanceX: Float,
