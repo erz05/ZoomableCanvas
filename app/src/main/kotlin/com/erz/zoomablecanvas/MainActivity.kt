@@ -33,7 +33,6 @@ class MainActivity : ComponentActivity() {
                             canPan = true,
                             canDoubleTapToZoom = true,
                             canLongPress = true,
-                            constraintToComposableBounds = true,
                             enableMiniMap = true
                         ),
                         manager = object: ZoomableManager(){

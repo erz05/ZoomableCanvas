@@ -61,6 +61,19 @@ internal class ZoomableGestureDetector(
             return true
         }
 
+        override fun onFling(
+            e1: MotionEvent?,
+            e2: MotionEvent,
+            velocityX: Float,
+            velocityY: Float
+        ): Boolean {
+            listener.onFling(
+                velocityX = velocityX,
+                velocityY = velocityY
+            )
+            return true
+        }
+
         override fun onLongPress(e: MotionEvent) {
             actionType = ActionType.LONG_PRESS
 
@@ -68,6 +81,10 @@ internal class ZoomableGestureDetector(
                 touchX = e.x,
                 touchY = e.y
             )
+        }
+
+        override fun onDoubleTap(e: MotionEvent): Boolean {
+            return super.onDoubleTap(e)
         }
     })
 

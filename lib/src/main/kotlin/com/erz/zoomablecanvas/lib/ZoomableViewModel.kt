@@ -1,5 +1,6 @@
 package com.erz.zoomablecanvas.lib
 
+import android.animation.ValueAnimator
 import android.graphics.Canvas
 import android.graphics.Matrix
 import android.graphics.Paint
@@ -7,6 +8,8 @@ import android.graphics.RectF
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.toArgb
 import androidx.core.graphics.withMatrix
+import androidx.dynamicanimation.animation.FlingAnimation
+import androidx.dynamicanimation.animation.FloatValueHolder
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.ViewModelProvider
 import androidx.lifecycle.viewmodel.CreationExtras
@@ -36,13 +39,18 @@ internal class ZoomableViewModel(
      * RectF that represents the canvas bounds
      * Used to calculate the canvasMatrix
      */
-    var canvasBounds = RectF()
+    var _canvasBounds = RectF()
 
     /**
      * RectF that represent the visible bounds on the canvas
      * Used to calculate the canvasMatrix
      */
-    var viewportBounds = RectF()
+    var _viewportBounds = RectF()
+
+    /**
+     * RectF that represents the bounds used to constraint the viewport
+     */
+    var constraintBounds: RectF? = null
 
     /**
      * Float used to constrain the [currentScale] to the min scale
@@ -65,6 +73,49 @@ internal class ZoomableViewModel(
         }
 
     /**
+     * FloatValueHolder to hold on the x fling animation value
+     */
+    private val xFlingFloatValueHolder = FloatValueHolder()
+
+    /**
+     * Fling animation to animate pan to in the x direction
+     */
+    private val xFlingAnimation = FlingAnimation(xFlingFloatValueHolder).apply {
+        addUpdateListener { _, value, _ ->
+            panTo(value, _viewportBounds.top)
+        }
+    }
+
+    /**
+     * FloatValueHolder to hold on the y fling animation value
+     */
+    private val yFlingFloatValueHolder = FloatValueHolder()
+
+    /**
+     * Fling animation to animate pan to in the y direction
+     */
+    private val yFlingAnimation = FlingAnimation(yFlingFloatValueHolder).apply {
+        addUpdateListener { _, value, _ ->
+            panTo(_viewportBounds.left, value)
+        }
+    }
+
+    /**
+     * Value animator to animate the double tap to zoom
+     */
+    private val doubleTapZoomValueAnimator = object : ValueAnimator() {
+        var focusX = 0f
+        var focusY = 0f
+
+        init {
+            duration = configuration.doubleTapZoomDuration
+            addUpdateListener { updatedAnimation ->
+                zoomTo(focusX, focusY, updatedAnimation.animatedValue as Float)
+            }
+        }
+    }
+
+    /**
      * Boolean to enable the mini map
      */
     var miniMapEnabled = true
@@ -84,6 +135,27 @@ internal class ZoomableViewModel(
         isDither = true
     }
 
+    override fun onGloballyPositioned(
+        composableWidth: Float,
+        composableHeight: Float,
+        constraintBounds: RectF?
+    ) {
+        _canvasBounds.set(
+            /* left = */ 0f,
+            /* top = */ 0f,
+            /* right = */ composableWidth,
+            /* bottom = */ composableHeight
+        )
+
+        this.constraintBounds = constraintBounds
+
+        // Todo ERZ - should we restore the viewport?
+        // To restore viewPort we need to remember the center position of the last viewport and the last scale
+        // we will use that to center the new viewport and to scale
+
+        panTo()
+    }
+
     override fun invalidate() {
         invalidate.update {
             System.currentTimeMillis()
@@ -91,11 +163,11 @@ internal class ZoomableViewModel(
     }
 
     override fun getCanvasBounds(): RectF {
-        return canvasBounds
+        return _canvasBounds
     }
 
     override fun getViewportBounds(): RectF {
-        return viewportBounds
+        return _viewportBounds
     }
 
     // Todo ERZ - should this be done on init?
@@ -103,24 +175,6 @@ internal class ZoomableViewModel(
     ) {
         // Reset viewPort
         currentScale = minScale
-        panTo()
-    }
-
-    fun onGloballyPositioned(
-        composableWidth: Float,
-        composableHeight: Float
-    ) {
-        canvasBounds.set(
-            /* left = */ 0f,
-            /* top = */ 0f,
-            /* right = */ composableWidth,
-            /* bottom = */ composableHeight
-        )
-
-        // Todo ERZ - should we restore the viewport?
-        // To restore viewPort we need to remember the center position of the last viewport and the last scale
-        // we will use that to center the new viewport and to scale
-
         panTo()
     }
 
@@ -142,39 +196,66 @@ internal class ZoomableViewModel(
         distanceY: Float,
     ) {
         panTo(
-            viewportBounds.left + ((distanceX * viewportBounds.width()) / canvasBounds.width()),
-            viewportBounds.top + ((distanceY * viewportBounds.height()) / canvasBounds.height())
+            _viewportBounds.left + ((distanceX * _viewportBounds.width()) / _canvasBounds.width()),
+            _viewportBounds.top + ((distanceY * _viewportBounds.height()) / _canvasBounds.height())
         )
     }
 
-    // Used to draw
-    fun onMove(
-        lastX: Float?,
-        lastY: Float?,
-        currentX: Float,
-        currentY: Float,
+    fun onFling(
+        velocityX: Float,
+        velocityY: Float
     ) {
+        if (!canScroll() || _canvasBounds.isEmpty || _viewportBounds.isEmpty) return
 
+        val xStartValue = _viewportBounds.left
+        val xMinValue = getXFlingMinValue()
+        val xMaxValue = getXFlingMaxValue()
+        if (xMaxValue > xMinValue && xStartValue >= xMinValue && xStartValue <= xMaxValue) {
+            xFlingFloatValueHolder.value = xStartValue
+            xFlingAnimation.setStartVelocity((-velocityX * _viewportBounds.width()) / _canvasBounds.width())
+            xFlingAnimation.setMinValue(xMinValue)
+            xFlingAnimation.setMaxValue(xMaxValue)
+            xFlingAnimation.start()
+        }
+
+        val yStartValue = _viewportBounds.top
+        val yMinValue = getYFlingMinValue()
+        val yMaxValue = getYFlingMaxValue()
+        if (yMaxValue > yMinValue && yStartValue >= yMinValue && yStartValue <= yMaxValue) {
+            yFlingFloatValueHolder.value = yStartValue
+            yFlingAnimation.setStartVelocity((-velocityY * _viewportBounds.height()) / _canvasBounds.height())
+            yFlingAnimation.setMinValue(yMinValue)
+            yFlingAnimation.setMaxValue(yMaxValue)
+            yFlingAnimation.start()
+        }
     }
 
-    fun onLongPress(
-        touchX: Float,
-        touchY: Float,
-    ) {
+    fun canPan() = currentScale == minScale
 
+    /**
+     * Boolean to determine if the viewport bounds can scroll within the view bounds
+     * This is used to determine the [canScrollHorizontally] needed for pagers to prevent paging while a user is zoomed in
+     */
+    private fun canScroll() = currentScale != minScale
+
+    private fun getXFlingMinValue(): Float {
+        return constraintBounds?.left ?: Float.MIN_VALUE
     }
 
-    fun onUp(
-        currentX: Float,
-        currentY: Float,
-        totalPointerCount: Int
-    ): Boolean {
-
-        return false
+    private fun getXFlingMaxValue(): Float {
+        return constraintBounds?.let {
+            it.width() - _viewportBounds.width()
+        } ?: Float.MAX_VALUE
     }
 
-    fun onTouchDone() {
+    private fun getYFlingMinValue(): Float {
+        return constraintBounds?.top ?: Float.MIN_VALUE
+    }
 
+    private fun getYFlingMaxValue(): Float {
+        return constraintBounds?.let {
+            it.height() - _viewportBounds.height()
+        } ?: Float.MAX_VALUE
     }
 
     /**
@@ -185,30 +266,39 @@ internal class ZoomableViewModel(
      * @param top - the new top position of the viewport
      */
     private fun panTo(
-        left: Float = viewportBounds.left,
-        top: Float = viewportBounds.top
+        left: Float = _viewportBounds.left,
+        top: Float = _viewportBounds.top
     ) {
-        val newViewportWidth = canvasBounds.width() / currentScale
-        val newViewportHeight = canvasBounds.height() / currentScale
-        val newViewportLeft = max(0f, min(left, canvasBounds.width() - newViewportWidth))
-        val newViewportTop = max(0f, min(top, canvasBounds.height() - newViewportHeight))
+        val newViewportWidth = _canvasBounds.width() / currentScale
+        val newViewportHeight = _canvasBounds.height() / currentScale
+        val newViewportLeft = max(0f, min(left, _canvasBounds.width() - newViewportWidth))
+        val newViewportTop = max(0f, min(top, _canvasBounds.height() - newViewportHeight))
 
         // If the size and position didn't change lets not do anything
-        if (newViewportWidth == viewportBounds.width()
-            && newViewportHeight == viewportBounds.height()
-            && newViewportLeft == viewportBounds.left
-            && newViewportTop == viewportBounds.top
+        if (newViewportWidth == _viewportBounds.width()
+            && newViewportHeight == _viewportBounds.height()
+            && newViewportLeft == _viewportBounds.left
+            && newViewportTop == _viewportBounds.top
         ) return
 
-        viewportBounds.set(
+        _viewportBounds.set(
             newViewportLeft,
             newViewportTop,
             newViewportLeft + newViewportWidth,
             newViewportTop + newViewportHeight
         )
 
+        constraintBounds?.let {
+            val maxLeft = it.centerX() - (_viewportBounds.width() / 2f)
+            val maxTop = it.centerY() - (_viewportBounds.height() / 2f)
+            _viewportBounds.offsetTo(
+                if (_viewportBounds.width() > it.width()) maxLeft else max(it.left, min(_viewportBounds.left, it.right - _viewportBounds.width())),
+                if (_viewportBounds.height() > it.height()) maxTop else max(it.top, min(_viewportBounds.top, it.bottom - _viewportBounds.height()))
+            )
+        }
+
         // Update canvas matrix
-        canvasMatrix.setRectToRect(viewportBounds, canvasBounds, Matrix.ScaleToFit.FILL)
+        canvasMatrix.setRectToRect(_viewportBounds, _canvasBounds, Matrix.ScaleToFit.FILL)
 
         invalidate()
     }
@@ -221,17 +311,17 @@ internal class ZoomableViewModel(
      *  @param newScale - scale factor to zoom by
      */
     private fun zoomTo(x: Float, y: Float, newScale: Float) {
-        val focusX = viewportBounds.left + ((viewportBounds.width() * x) / canvasBounds.width())
-        val focusY = viewportBounds.top + ((viewportBounds.height() * y) / canvasBounds.height())
+        val focusX = _viewportBounds.left + ((_viewportBounds.width() * x) / _canvasBounds.width())
+        val focusY = _viewportBounds.top + ((_viewportBounds.height() * y) / _canvasBounds.height())
 
         currentScale = newScale
 
-        val newViewportWidth = canvasBounds.width() / currentScale
-        val newViewportHeight = canvasBounds.height() / currentScale
+        val newViewportWidth = _canvasBounds.width() / currentScale
+        val newViewportHeight = _canvasBounds.height() / currentScale
 
         panTo(
-            focusX - ((newViewportWidth * x) / canvasBounds.width()),
-            focusY - ((newViewportHeight * y) / canvasBounds.height())
+            focusX - ((newViewportWidth * x) / _canvasBounds.width()),
+            focusY - ((newViewportHeight * y) / _canvasBounds.height())
         )
     }
 
@@ -260,10 +350,10 @@ internal class ZoomableViewModel(
                 paint.style = Paint.Style.STROKE
                 paint.strokeWidth = 2f
                 paint.color = Color.Red.toArgb()
-                canvas.drawRect(canvasBounds, paint)
+                canvas.drawRect(_canvasBounds, paint)
 
                 paint.color = Color.Blue.toArgb()
-                canvas.drawRect(viewportBounds, paint)
+                canvas.drawRect(_viewportBounds, paint)
 
                 paint.color = Color.Magenta.toArgb()
 

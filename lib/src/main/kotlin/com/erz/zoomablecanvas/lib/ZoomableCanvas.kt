@@ -13,11 +13,9 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clipToBounds
 import androidx.compose.ui.graphics.drawscope.drawIntoCanvas
 import androidx.compose.ui.graphics.nativeCanvas
-import androidx.compose.ui.hapticfeedback.HapticFeedbackType
 import androidx.compose.ui.input.pointer.pointerInteropFilter
 import androidx.compose.ui.layout.onGloballyPositioned
 import androidx.compose.ui.platform.LocalContext
-import androidx.compose.ui.platform.LocalHapticFeedback
 import androidx.lifecycle.viewmodel.compose.viewModel
 
 @OptIn(ExperimentalComposeUiApi::class)
@@ -38,7 +36,6 @@ fun ZoomableCanvas(
     )
 
     val context = LocalContext.current
-    val haptic = LocalHapticFeedback.current
     val invalidate by viewModel.invalidate.collectAsState()
 
     val zoomableGestureDetector = remember {
@@ -59,11 +56,16 @@ fun ZoomableCanvas(
                     currentX: Float,
                     currentY: Float
                 ) {
-                    viewModel.onMove(
-                        lastX = lastX,
-                        lastY = lastY,
-                        currentX = currentX,
-                        currentY = currentY
+
+                }
+
+                override fun onFling(
+                    velocityX: Float,
+                    velocityY: Float
+                ) {
+                    viewModel.onFling(
+                        velocityX = velocityX,
+                        velocityY = velocityY
                     )
                 }
 
@@ -72,23 +74,11 @@ fun ZoomableCanvas(
                     currentY: Float,
                     totalPointerCount: Int
                 ) {
-                    val result = viewModel.onUp(
-                        currentX = currentX,
-                        currentY = currentY,
-                        totalPointerCount = totalPointerCount
-                    )
-
-                    if (result) {
-                        haptic.performHapticFeedback(HapticFeedbackType.Confirm)
-                    }
+                    // Todo ERZ - expose long press
                 }
 
                 override fun onLongPress(touchX: Float, touchY: Float) {
-                    viewModel.onLongPress(
-                        touchX = touchX,
-                        touchY = touchY
-                    )
-                    haptic.performHapticFeedback(HapticFeedbackType.LongPress)
+                    // Todo ERZ - expose long press
                 }
 
                 override fun onScale(
@@ -104,7 +94,7 @@ fun ZoomableCanvas(
                 }
 
                 override fun onDone() {
-                    viewModel.onTouchDone()
+                    // Todo ERZ - expose onDone
                 }
             }
         )
@@ -119,7 +109,7 @@ fun ZoomableCanvas(
             }
             .background(colorScheme.background)
             .onGloballyPositioned { coordinates ->
-                viewModel.onGloballyPositioned(
+                manager.onGloballyPositioned(
                     coordinates.size.width.toFloat(),
                     coordinates.size.height.toFloat(),
                 )

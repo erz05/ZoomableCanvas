@@ -14,6 +14,11 @@ internal interface ZoomableGestureDetectorListener {
         currentY: Float
     )
 
+    fun onFling(
+        velocityX: Float,
+        velocityY: Float
+    )
+
     fun onUp(
         currentX: Float,
         currentY: Float,

@@ -1,6 +1,7 @@
 package com.erz.zoomablecanvas.lib
 
 import android.graphics.Canvas
+import android.graphics.RectF
 
 abstract class ZoomableManager {
 
@@ -9,6 +10,18 @@ abstract class ZoomableManager {
     abstract fun onDraw(
         canvas: Canvas
     )
+
+    open fun getConstraintBounds(
+        composableWidth: Float,
+        composableHeight: Float
+    ): RectF? {
+        return RectF(
+            /* left = */ 0f,
+            /* top = */ 0f,
+            /* right = */ composableWidth,
+            /* bottom = */ composableHeight
+        )
+    }
 
     fun invalidate() {
         zoomable?.invalidate()
@@ -30,6 +43,7 @@ abstract class ZoomableManager {
 
     /**
      * Maps the touchX value to the x position on the canvas
+     * // Todo ERZ - maybe I should just return absolute and relative touch in the functions
      */
     private fun mapTouchXValue(
         touchX: Float
@@ -41,6 +55,7 @@ abstract class ZoomableManager {
 
     /**
      * Maps the touchY value to the y position on the canvas
+     * // Todo ERZ - maybe I should just return absolute and relative touch in the functions
      */
     private fun mapTouchYValue(
         touchY: Float
@@ -70,5 +85,19 @@ abstract class ZoomableManager {
         zoomable: IZoomable
     ) {
         this.zoomable = zoomable
+    }
+
+    internal fun onGloballyPositioned(
+        composableWidth: Float,
+        composableHeight: Float
+    ) {
+        zoomable?.onGloballyPositioned(
+            composableWidth = composableWidth,
+            composableHeight = composableHeight,
+            constraintBounds = getConstraintBounds(
+                composableWidth = composableWidth,
+                composableHeight = composableHeight
+            )
+        )
     }
 }
