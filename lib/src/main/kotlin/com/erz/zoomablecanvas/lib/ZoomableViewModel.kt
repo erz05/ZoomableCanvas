@@ -8,12 +8,18 @@ import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.toArgb
 import androidx.core.graphics.withMatrix
 import androidx.lifecycle.ViewModel
+import androidx.lifecycle.ViewModelProvider
+import androidx.lifecycle.ViewModelProvider.AndroidViewModelFactory.Companion.APPLICATION_KEY
+import androidx.lifecycle.createSavedStateHandle
+import androidx.lifecycle.viewmodel.CreationExtras
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.update
 import kotlin.math.max
 import kotlin.math.min
 
-class ZoomableViewModel() : ViewModel() {
+class ZoomableViewModel(
+    configuration: ZoomableConfiguration
+) : ViewModel() {
 
     companion object {
 
@@ -213,8 +219,14 @@ class ZoomableViewModel() : ViewModel() {
         val maxLeft = imageBounds.centerX() - (viewportBounds.width() / 2f)
         val maxTop = imageBounds.centerY() - (viewportBounds.height() / 2f)
         viewportBounds.offsetTo(
-            if (viewportBounds.width() > imageBounds.width()) maxLeft else max(imageBounds.left, min(viewportBounds.left, imageBounds.right - viewportBounds.width())),
-            if (viewportBounds.height() > imageBounds.height()) maxTop else max(imageBounds.top, min(viewportBounds.top, imageBounds.bottom - viewportBounds.height()))
+            if (viewportBounds.width() > imageBounds.width()) maxLeft else max(
+                imageBounds.left,
+                min(viewportBounds.left, imageBounds.right - viewportBounds.width())
+            ),
+            if (viewportBounds.height() > imageBounds.height()) maxTop else max(
+                imageBounds.top,
+                min(viewportBounds.top, imageBounds.bottom - viewportBounds.height())
+            )
         )
 
         // Update canvas matrix
@@ -300,5 +312,19 @@ class ZoomableViewModel() : ViewModel() {
         touchY: Float
     ): Float {
         return ((touchY * viewportBounds.height()) / viewBounds.height()) + viewportBounds.top
+    }
+
+    class Factory(
+        private val configuration: ZoomableConfiguration
+    ) : ViewModelProvider.Factory {
+        @Suppress("UNCHECKED_CAST")
+        override fun <T : ViewModel> create(
+            modelClass: Class<T>,
+            extras: CreationExtras
+        ): T {
+            return ZoomableViewModel(
+                configuration = configuration
+            ) as T
+        }
     }
 }

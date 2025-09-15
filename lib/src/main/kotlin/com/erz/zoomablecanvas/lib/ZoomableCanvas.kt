@@ -26,9 +26,13 @@ import androidx.lifecycle.viewmodel.compose.viewModel
 fun ZoomableCanvas(
     modifier: Modifier = Modifier,
     configuration: ZoomableConfiguration,
-    onDraw: (Canvas) -> Unit
+    onDraw: (Canvas) -> Unit,
 ) {
-    val viewModel: ZoomableViewModel = viewModel()
+    val viewModel: ZoomableViewModel = viewModel(
+        factory = ZoomableViewModel.Factory(
+            configuration = configuration
+        )
+    )
     val context = LocalContext.current
     val haptic = LocalHapticFeedback.current
     val invalidate by viewModel.invalidate.collectAsState()
@@ -70,9 +74,9 @@ fun ZoomableCanvas(
                         totalPointerCount = totalPointerCount
                     )
 
-//                    if (result) {
-//                        haptic.performHapticFeedback(HapticFeedbackType.Confirm)
-//                    }
+                    if (result) {
+                        haptic.performHapticFeedback(HapticFeedbackType.Confirm)
+                    }
                 }
 
                 override fun onLongPress(touchX: Float, touchY: Float) {

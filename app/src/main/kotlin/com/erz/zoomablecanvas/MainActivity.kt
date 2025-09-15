@@ -31,7 +31,9 @@ class MainActivity : ComponentActivity() {
                         modifier = Modifier,
                         configuration = ZoomableConfiguration(
                             canFling = true,
+                            canPan = true,
                             canDoubleTapToZoom = true,
+                            canLongPress = true,
                             minZoom = 1f,
                             maxZoom = 13f,
                             constraintToComposableBounds = true,
