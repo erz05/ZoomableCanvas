@@ -1,6 +1,5 @@
 package com.erz.zoomablecanvas.lib
 
-import android.graphics.Canvas
 import androidx.compose.foundation.Canvas
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.fillMaxSize
@@ -26,13 +25,18 @@ import androidx.lifecycle.viewmodel.compose.viewModel
 fun ZoomableCanvas(
     modifier: Modifier = Modifier,
     configuration: ZoomableConfiguration,
-    onDraw: (Canvas) -> Unit,
+    manager: ZoomableManager
 ) {
     val viewModel: ZoomableViewModel = viewModel(
         factory = ZoomableViewModel.Factory(
             configuration = configuration
         )
     )
+
+    manager.setZoomable(
+        zoomable = viewModel
+    )
+
     val context = LocalContext.current
     val haptic = LocalHapticFeedback.current
     val invalidate by viewModel.invalidate.collectAsState()
@@ -127,7 +131,7 @@ fun ZoomableCanvas(
             viewModel.draw(
                 canvas = canvas.nativeCanvas,
                 externalDraw = { zoomableCanvas ->
-                    onDraw(zoomableCanvas)
+                    manager.onDraw(zoomableCanvas)
                 }
             )
         }

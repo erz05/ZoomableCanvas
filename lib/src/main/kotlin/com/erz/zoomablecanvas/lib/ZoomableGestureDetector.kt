@@ -6,7 +6,7 @@ import android.view.MotionEvent
 import android.view.ScaleGestureDetector
 import kotlin.math.max
 
-class ZoomableGestureDetector(
+internal class ZoomableGestureDetector(
     context: Context,
     private val listener: ZoomableGestureDetectorListener
 ) {

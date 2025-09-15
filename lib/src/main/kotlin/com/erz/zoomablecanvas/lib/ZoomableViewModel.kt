@@ -9,17 +9,15 @@ import androidx.compose.ui.graphics.toArgb
 import androidx.core.graphics.withMatrix
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.ViewModelProvider
-import androidx.lifecycle.ViewModelProvider.AndroidViewModelFactory.Companion.APPLICATION_KEY
-import androidx.lifecycle.createSavedStateHandle
 import androidx.lifecycle.viewmodel.CreationExtras
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.update
 import kotlin.math.max
 import kotlin.math.min
 
-class ZoomableViewModel(
+internal class ZoomableViewModel(
     configuration: ZoomableConfiguration
-) : ViewModel() {
+) : ViewModel(), IZoomable {
 
     companion object {
 
@@ -96,6 +94,12 @@ class ZoomableViewModel(
     private val paint = Paint().apply {
         isAntiAlias = true
         isDither = true
+    }
+
+    override fun invalidate() {
+        invalidate.update {
+            System.currentTimeMillis()
+        }
     }
 
     // Todo ERZ - should this be done on init?
@@ -233,12 +237,6 @@ class ZoomableViewModel(
         canvasMatrix.setRectToRect(viewportBounds, viewBounds, Matrix.ScaleToFit.FILL)
 
         invalidate()
-    }
-
-    private fun invalidate() {
-        invalidate.update {
-            System.currentTimeMillis()
-        }
     }
 
     /**

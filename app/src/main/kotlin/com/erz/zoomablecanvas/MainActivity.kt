@@ -1,5 +1,6 @@
 package com.erz.zoomablecanvas
 
+import android.graphics.Canvas
 import android.graphics.Paint
 import android.os.Bundle
 import androidx.activity.ComponentActivity
@@ -13,6 +14,7 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.tooling.preview.Preview
 import com.erz.zoomablecanvas.lib.ZoomableCanvas
 import com.erz.zoomablecanvas.lib.ZoomableConfiguration
+import com.erz.zoomablecanvas.lib.ZoomableManager
 import com.erz.zoomablecanvas.ui.theme.ZoomableCanvasTheme
 
 class MainActivity : ComponentActivity() {
@@ -39,11 +41,13 @@ class MainActivity : ComponentActivity() {
                             constraintToComposableBounds = true,
                             enableMiniMap = true
                         ),
-                        onDraw = { canvas ->
-                            canvas.drawCircle(500f, 750f, 50f, Paint().apply {
-                                strokeWidth = 5f
-                                style = Paint.Style.STROKE
-                            })
+                        manager = object: ZoomableManager(){
+                            override fun onDraw(canvas: Canvas) {
+                                canvas.drawCircle(500f, 750f, 50f, Paint().apply {
+                                    strokeWidth = 5f
+                                    style = Paint.Style.STROKE
+                                })
+                            }
                         }
                     )
                 }
