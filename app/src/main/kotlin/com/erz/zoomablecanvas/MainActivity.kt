@@ -8,15 +8,17 @@ import androidx.activity.compose.setContent
 import androidx.activity.enableEdgeToEdge
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.material3.Scaffold
-import androidx.compose.material3.Text
-import androidx.compose.runtime.Composable
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.tooling.preview.Preview
 import com.erz.zoomablecanvas.lib.ZoomableCanvas
 import com.erz.zoomablecanvas.lib.ZoomableConfiguration
 import com.erz.zoomablecanvas.lib.ZoomableManager
 import com.erz.zoomablecanvas.ui.theme.ZoomableCanvasTheme
 
+/**
+ * Todos - Debug drawer with options
+ * pager example
+ * drawing example
+ */
 class MainActivity : ComponentActivity() {
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
@@ -24,11 +26,6 @@ class MainActivity : ComponentActivity() {
         setContent {
             ZoomableCanvasTheme {
                 Scaffold(modifier = Modifier.fillMaxSize()) { innerPadding ->
-//                    Greeting(
-//                        name = "Android",
-//                        modifier = Modifier.padding(innerPadding)
-//                    )
-
                     ZoomableCanvas(
                         modifier = Modifier,
                         configuration = ZoomableConfiguration(
@@ -36,8 +33,6 @@ class MainActivity : ComponentActivity() {
                             canPan = true,
                             canDoubleTapToZoom = true,
                             canLongPress = true,
-                            minZoom = 1f,
-                            maxZoom = 13f,
                             constraintToComposableBounds = true,
                             enableMiniMap = true
                         ),
@@ -53,21 +48,5 @@ class MainActivity : ComponentActivity() {
                 }
             }
         }
-    }
-}
-
-@Composable
-fun Greeting(name: String, modifier: Modifier = Modifier) {
-    Text(
-        text = "Hello $name!",
-        modifier = modifier
-    )
-}
-
-@Preview(showBackground = true)
-@Composable
-fun GreetingPreview() {
-    ZoomableCanvasTheme {
-        Greeting("Android")
     }
 }

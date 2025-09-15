@@ -16,31 +16,19 @@ import kotlin.math.max
 import kotlin.math.min
 
 internal class ZoomableViewModel(
-    configuration: ZoomableConfiguration
+    private val configuration: ZoomableConfiguration
 ) : ViewModel(), IZoomable {
 
-    companion object {
-
-        /**
-         * Constant float used for the min scale
-         * At this scale the viewport will match the view bounds
-         */
-        private const val DEFAULT_MIN_SCALE = 1f
-
-        /**
-         * Constant float used for the max scale
-         * At this scale the viewport will the smallest possible size
-         * This number was calculated to match our legacy tile view library max zoom
-         */
-        private const val DEFAULT_MAX_SCALE = 13f
-    }
-
+    /**
+     * Simple state that holds on holds a timestamp
+     * used to force a recomposition on the zoomableCanvas
+     * We update this everytime we update the viewport bounds
+     * This can also be called manually with the invalidate() function through the [ZoomableManager]
+     */
     val invalidate = MutableStateFlow(0L)
 
-    val imageBounds = RectF()
-
     /**
-     * Matrix used to apply transformations to the views canvas
+     * Matrix used to apply transformations to the canvas
      */
     val canvasMatrix = Matrix()
 
@@ -48,7 +36,7 @@ internal class ZoomableViewModel(
      * RectF that represents the canvas bounds
      * Used to calculate the canvasMatrix
      */
-    var viewBounds = RectF()
+    var canvasBounds = RectF()
 
     /**
      * RectF that represent the visible bounds on the canvas
@@ -59,12 +47,12 @@ internal class ZoomableViewModel(
     /**
      * Float used to constrain the [currentScale] to the min scale
      */
-    private val minScale = DEFAULT_MIN_SCALE
+    private val minScale = configuration.minScale
 
     /**
      * Float used to constrain the [currentScale] to the max scale
      */
-    private val maxScale = DEFAULT_MAX_SCALE
+    private val maxScale = configuration.maxScale
 
     /**
      * Float that holds on to the current scale
@@ -82,7 +70,7 @@ internal class ZoomableViewModel(
     var miniMapEnabled = true
 
     /**
-     * Matrix to scale down the viewport and view bounds for the mini map
+     * Matrix to scale down the viewport and canvas bounds for the mini map
      */
     private val miniMapMatrix = Matrix().apply {
         setScale(.3f, .3f)
@@ -102,6 +90,14 @@ internal class ZoomableViewModel(
         }
     }
 
+    override fun getCanvasBounds(): RectF {
+        return canvasBounds
+    }
+
+    override fun getViewportBounds(): RectF {
+        return viewportBounds
+    }
+
     // Todo ERZ - should this be done on init?
     fun setup(
     ) {
@@ -114,19 +110,11 @@ internal class ZoomableViewModel(
         composableWidth: Float,
         composableHeight: Float
     ) {
-        viewBounds.set(
+        canvasBounds.set(
             /* left = */ 0f,
             /* top = */ 0f,
             /* right = */ composableWidth,
             /* bottom = */ composableHeight
-        )
-
-        val min = min(composableWidth, composableHeight).toFloat()
-        imageBounds.set(
-            /* left = */ (composableWidth / 2f) - (min / 2f),
-            /* top = */ (composableHeight / 2f) - (min / 2f),
-            /* right = */ (composableWidth / 2f) + (min / 2f),
-            /* bottom = */ (composableHeight / 2f) + (min / 2f)
         )
 
         // Todo ERZ - should we restore the viewport?
@@ -154,8 +142,8 @@ internal class ZoomableViewModel(
         distanceY: Float,
     ) {
         panTo(
-            viewportBounds.left + ((distanceX * viewportBounds.width()) / viewBounds.width()),
-            viewportBounds.top + ((distanceY * viewportBounds.height()) / viewBounds.height())
+            viewportBounds.left + ((distanceX * viewportBounds.width()) / canvasBounds.width()),
+            viewportBounds.top + ((distanceY * viewportBounds.height()) / canvasBounds.height())
         )
     }
 
@@ -200,10 +188,10 @@ internal class ZoomableViewModel(
         left: Float = viewportBounds.left,
         top: Float = viewportBounds.top
     ) {
-        val newViewportWidth = viewBounds.width() / currentScale
-        val newViewportHeight = viewBounds.height() / currentScale
-        val newViewportLeft = max(0f, min(left, viewBounds.width() - newViewportWidth))
-        val newViewportTop = max(0f, min(top, viewBounds.height() - newViewportHeight))
+        val newViewportWidth = canvasBounds.width() / currentScale
+        val newViewportHeight = canvasBounds.height() / currentScale
+        val newViewportLeft = max(0f, min(left, canvasBounds.width() - newViewportWidth))
+        val newViewportTop = max(0f, min(top, canvasBounds.height() - newViewportHeight))
 
         // If the size and position didn't change lets not do anything
         if (newViewportWidth == viewportBounds.width()
@@ -219,22 +207,8 @@ internal class ZoomableViewModel(
             newViewportTop + newViewportHeight
         )
 
-        // Constraint the viewportBounds to the imageBounds
-        val maxLeft = imageBounds.centerX() - (viewportBounds.width() / 2f)
-        val maxTop = imageBounds.centerY() - (viewportBounds.height() / 2f)
-        viewportBounds.offsetTo(
-            if (viewportBounds.width() > imageBounds.width()) maxLeft else max(
-                imageBounds.left,
-                min(viewportBounds.left, imageBounds.right - viewportBounds.width())
-            ),
-            if (viewportBounds.height() > imageBounds.height()) maxTop else max(
-                imageBounds.top,
-                min(viewportBounds.top, imageBounds.bottom - viewportBounds.height())
-            )
-        )
-
         // Update canvas matrix
-        canvasMatrix.setRectToRect(viewportBounds, viewBounds, Matrix.ScaleToFit.FILL)
+        canvasMatrix.setRectToRect(viewportBounds, canvasBounds, Matrix.ScaleToFit.FILL)
 
         invalidate()
     }
@@ -247,17 +221,17 @@ internal class ZoomableViewModel(
      *  @param newScale - scale factor to zoom by
      */
     private fun zoomTo(x: Float, y: Float, newScale: Float) {
-        val focusX = viewportBounds.left + ((viewportBounds.width() * x) / viewBounds.width())
-        val focusY = viewportBounds.top + ((viewportBounds.height() * y) / viewBounds.height())
+        val focusX = viewportBounds.left + ((viewportBounds.width() * x) / canvasBounds.width())
+        val focusY = viewportBounds.top + ((viewportBounds.height() * y) / canvasBounds.height())
 
         currentScale = newScale
 
-        val newViewportWidth = viewBounds.width() / currentScale
-        val newViewportHeight = viewBounds.height() / currentScale
+        val newViewportWidth = canvasBounds.width() / currentScale
+        val newViewportHeight = canvasBounds.height() / currentScale
 
         panTo(
-            focusX - ((newViewportWidth * x) / viewBounds.width()),
-            focusY - ((newViewportHeight * y) / viewBounds.height())
+            focusX - ((newViewportWidth * x) / canvasBounds.width()),
+            focusY - ((newViewportHeight * y) / canvasBounds.height())
         )
     }
 
@@ -286,30 +260,15 @@ internal class ZoomableViewModel(
                 paint.style = Paint.Style.STROKE
                 paint.strokeWidth = 2f
                 paint.color = Color.Red.toArgb()
-                canvas.drawRect(viewBounds, paint)
+                canvas.drawRect(canvasBounds, paint)
 
                 paint.color = Color.Blue.toArgb()
                 canvas.drawRect(viewportBounds, paint)
-
-                paint.color = Color.Green.toArgb()
-                canvas.drawRect(imageBounds, paint)
 
                 paint.color = Color.Magenta.toArgb()
 
             }
         }
-    }
-
-    private fun mapTouchXValue(
-        touchX: Float
-    ): Float {
-        return ((touchX * viewportBounds.width()) / viewBounds.width()) + viewportBounds.left
-    }
-
-    private fun mapTouchYValue(
-        touchY: Float
-    ): Float {
-        return ((touchY * viewportBounds.height()) / viewBounds.height()) + viewportBounds.top
     }
 
     class Factory(
