@@ -194,7 +194,7 @@ internal class ZoomableViewModel(
         )
     }
 
-    fun onDown(event: MotionEvent) {
+    fun onDown(motionEvent: MotionEvent) {
         xFlingAnimation.cancel()
         yFlingAnimation.cancel()
     }
@@ -243,14 +243,14 @@ internal class ZoomableViewModel(
     }
 
     fun onDoubleTap(
-        event: MotionEvent
+        motionEvent: MotionEvent
     ) {
         if (configuration.canDoubleTapToZoom.not()) return
         var newScale = 2f.pow(floor(ln((currentScale * 2f)) / ln(2f)))
         if (newScale >= maxScale) newScale = minScale
         doubleTapZoomValueAnimator.setFloatValues(currentScale, newScale)
-        doubleTapZoomValueAnimator.focusX = event.x
-        doubleTapZoomValueAnimator.focusY = event.y
+        doubleTapZoomValueAnimator.focusX = motionEvent.x
+        doubleTapZoomValueAnimator.focusY = motionEvent.y
         doubleTapZoomValueAnimator.start()
     }
 

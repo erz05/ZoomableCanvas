@@ -83,9 +83,11 @@ internal class ZoomableGestureDetector(
             )
         }
 
-        override fun onDoubleTap(e: MotionEvent): Boolean {
+        override fun onDoubleTap(
+            motionEvent: MotionEvent
+        ): Boolean {
             listener.onDoubleTap(
-                event = e
+                motionEvent = motionEvent
             )
             return true
         }

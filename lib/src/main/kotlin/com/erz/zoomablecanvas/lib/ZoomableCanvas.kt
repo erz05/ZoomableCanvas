@@ -44,9 +44,9 @@ fun ZoomableCanvas(
             context = context,
             listener = object : ZoomableGestureDetectorListener {
 
-                override fun onDown(event: MotionEvent) {
+                override fun onDown(motionEvent: MotionEvent) {
                     viewModel.onDown(
-                        event = event
+                        motionEvent = motionEvent
                     )
                 }
 
@@ -100,9 +100,9 @@ fun ZoomableCanvas(
                     )
                 }
 
-                override fun onDoubleTap(event: MotionEvent) {
+                override fun onDoubleTap(motionEvent: MotionEvent) {
                     viewModel.onDoubleTap(
-                        event = event
+                        motionEvent = motionEvent
                     )
                 }
 

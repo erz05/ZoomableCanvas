@@ -5,7 +5,7 @@ import android.view.MotionEvent
 internal interface ZoomableGestureDetectorListener {
 
     fun onDown(
-        event: MotionEvent
+        motionEvent: MotionEvent
     )
 
     fun onTranslate(
@@ -43,7 +43,7 @@ internal interface ZoomableGestureDetectorListener {
     )
 
     fun onDoubleTap(
-        event: MotionEvent
+        motionEvent: MotionEvent
     )
 
     fun onDone()
