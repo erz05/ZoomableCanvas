@@ -84,7 +84,10 @@ internal class ZoomableGestureDetector(
         }
 
         override fun onDoubleTap(e: MotionEvent): Boolean {
-            return super.onDoubleTap(e)
+            listener.onDoubleTap(
+                event = e
+            )
+            return true
         }
     })
 
@@ -114,6 +117,7 @@ internal class ZoomableGestureDetector(
                 lastX = null
                 lastY = null
                 actionType = ActionType.NONE
+                listener.onDown(motionEvent)
             }
             MotionEvent.ACTION_POINTER_DOWN -> {
                 totalPointerCount = max(totalPointerCount, motionEvent.pointerCount)

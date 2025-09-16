@@ -1,5 +1,6 @@
 package com.erz.zoomablecanvas.lib
 
+import android.view.MotionEvent
 import androidx.compose.foundation.Canvas
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.fillMaxSize
@@ -42,6 +43,12 @@ fun ZoomableCanvas(
         ZoomableGestureDetector(
             context = context,
             listener = object : ZoomableGestureDetectorListener {
+
+                override fun onDown(event: MotionEvent) {
+                    viewModel.onDown(
+                        event = event
+                    )
+                }
 
                 override fun onTranslate(distanceX: Float, distanceY: Float) {
                     viewModel.onTranslate(
@@ -90,6 +97,12 @@ fun ZoomableCanvas(
                         currentX = currentX,
                         currentY = currentY,
                         scale = scale
+                    )
+                }
+
+                override fun onDoubleTap(event: MotionEvent) {
+                    viewModel.onDoubleTap(
+                        event = event
                     )
                 }
 

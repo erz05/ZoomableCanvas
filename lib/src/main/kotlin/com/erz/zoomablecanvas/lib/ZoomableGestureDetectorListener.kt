@@ -1,6 +1,12 @@
 package com.erz.zoomablecanvas.lib
 
+import android.view.MotionEvent
+
 internal interface ZoomableGestureDetectorListener {
+
+    fun onDown(
+        event: MotionEvent
+    )
 
     fun onTranslate(
         distanceX: Float,
@@ -34,6 +40,10 @@ internal interface ZoomableGestureDetectorListener {
         currentX: Float,
         currentY: Float,
         scale: Float
+    )
+
+    fun onDoubleTap(
+        event: MotionEvent
     )
 
     fun onDone()

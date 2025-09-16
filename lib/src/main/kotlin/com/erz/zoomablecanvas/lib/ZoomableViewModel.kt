@@ -5,6 +5,7 @@ import android.graphics.Canvas
 import android.graphics.Matrix
 import android.graphics.Paint
 import android.graphics.RectF
+import android.view.MotionEvent
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.toArgb
 import androidx.core.graphics.withMatrix
@@ -15,8 +16,11 @@ import androidx.lifecycle.ViewModelProvider
 import androidx.lifecycle.viewmodel.CreationExtras
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.update
+import kotlin.math.floor
+import kotlin.math.ln
 import kotlin.math.max
 import kotlin.math.min
+import kotlin.math.pow
 
 internal class ZoomableViewModel(
     private val configuration: ZoomableConfiguration
@@ -33,24 +37,24 @@ internal class ZoomableViewModel(
     /**
      * Matrix used to apply transformations to the canvas
      */
-    val canvasMatrix = Matrix()
+    private val canvasMatrix = Matrix()
 
     /**
      * RectF that represents the canvas bounds
      * Used to calculate the canvasMatrix
      */
-    var _canvasBounds = RectF()
+    private var _canvasBounds = RectF()
 
     /**
      * RectF that represent the visible bounds on the canvas
      * Used to calculate the canvasMatrix
      */
-    var _viewportBounds = RectF()
+    private var _viewportBounds = RectF()
 
     /**
      * RectF that represents the bounds used to constraint the viewport
      */
-    var constraintBounds: RectF? = null
+    private var constraintBounds: RectF? = null
 
     /**
      * Float used to constrain the [currentScale] to the min scale
@@ -190,6 +194,11 @@ internal class ZoomableViewModel(
         )
     }
 
+    fun onDown(event: MotionEvent) {
+        xFlingAnimation.cancel()
+        yFlingAnimation.cancel()
+    }
+
     // Used to pan viewport inside of bounds
     fun onTranslate(
         distanceX: Float,
@@ -205,7 +214,10 @@ internal class ZoomableViewModel(
         velocityX: Float,
         velocityY: Float
     ) {
-        if (!canScroll() || _canvasBounds.isEmpty || _viewportBounds.isEmpty) return
+        if (configuration.canFling.not()
+            || canScroll().not()
+            || _canvasBounds.isEmpty
+            || _viewportBounds.isEmpty) return
 
         val xStartValue = _viewportBounds.left
         val xMinValue = getXFlingMinValue()
@@ -228,6 +240,18 @@ internal class ZoomableViewModel(
             yFlingAnimation.setMaxValue(yMaxValue)
             yFlingAnimation.start()
         }
+    }
+
+    fun onDoubleTap(
+        event: MotionEvent
+    ) {
+        if (configuration.canDoubleTapToZoom.not()) return
+        var newScale = 2f.pow(floor(ln((currentScale * 2f)) / ln(2f)))
+        if (newScale >= maxScale) newScale = minScale
+        doubleTapZoomValueAnimator.setFloatValues(currentScale, newScale)
+        doubleTapZoomValueAnimator.focusX = event.x
+        doubleTapZoomValueAnimator.focusY = event.y
+        doubleTapZoomValueAnimator.start()
     }
 
     fun canPan() = currentScale == minScale
